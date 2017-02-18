@@ -4,3 +4,5 @@ version = "0.1.0"
 authors = ["pi"]
 
 [dependencies]
+rusqlite = "0.9.5"
+sensehat = { git = "https://github.com/shaunmulligan/sensehat-rs.git" }
