@@ -1,9 +1,11 @@
 extern crate sensehat;
 extern crate rusqlite;
+extern crate chrono;
 
 use sensehat::*;
 use std::{thread, time};
 use rusqlite::Connection;
+use chrono::prelude::*;
 
 struct SenseData {
     humidity: f64,
@@ -15,7 +17,7 @@ struct SenseData {
 
 fn main() {
 
-    let wait = time::Duration::from_millis(1000);
+    let wait = time::Duration::from_millis(10000);
     let mut sense = SenseHat::new().unwrap();
 
     sense.init();
@@ -26,6 +28,7 @@ fn main() {
     
 
     conn.execute("CREATE TABLE sense_data (
+                  time_log TIMESTAMP DEFAULT (DATETIME('now','localtime')),
                   humidity  FLOAT,
                   temperature   FLOAT,
                   p_temperature FLOAT,
@@ -34,6 +37,8 @@ fn main() {
                   )", &[]).unwrap();
     
     loop {
+        let local: DateTime<Local> = Local::now(); 
+        println!("{:?}", local);
         let res = SenseData {
             humidity: sense.get_humidity() as f64,
             temperature: sense.get_temperature() as f64,
@@ -42,12 +47,13 @@ fn main() {
             pressure: sense.get_pressure() as f64
         };
         conn.execute("INSERT INTO sense_data (
+                time_log,
                 humidity, 
                 temperature, 
                 p_temperature, 
                 h_temperature, 
                 pressure)
-            VALUES (?1, ?2, ?3, ?4, ?5)",
+            VALUES (DATETIME('now','localtime'), ?1, ?2, ?3, ?4, ?5)",
                  &[&res.humidity, &res.temperature, &res.p_temperature, 
                  &res.h_temperature, &res.pressure]).unwrap();
         thread::sleep(wait);
